@@ -1,0 +1,19 @@
+{
+  "name": "inventory-service",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon --watch src src/server.js",
+    "start": "NODE_ENV=production node src/server.js",
+    "test": "node --test --test-reporter=spec",
+    "test:watch": "node --test --watch"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "supertest": "^7.0.0"
+  }
+}
