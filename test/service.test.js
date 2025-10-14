@@ -8,6 +8,7 @@ import {
   adjustStock,
   getLevel,
   resetForTests,
+  isSellable,
 } from '../src/inventory.service.js';
 
 // reset state before every test so they don't interfere
@@ -51,4 +52,24 @@ test('adjustStock ignores duplicate refId', () => {
   adjustStock({ itemId: 'D1', delta: -1, reason: 'SALE', refId: 't1' });
   adjustStock({ itemId: 'D1', delta: -1, reason: 'SALE', refId: 't1' });
   assert.equal(getLevel('D1'), -1);
+});
+
+// test the state of an item (positive value)
+test('check if an item (with a positive value) is sellable', () => {
+  addItem({ id: 'E1', sku: 'CHOCOLATE-600', name: 'Chocolate' });
+  adjustStock({ itemId: 'E1', delta: 100, reason: 'SALE', refId: 'c1' });
+  assert.equal(isSellable('E1'), true);
+});
+
+// test the state of an item (a value of zero)
+test('check if an item (with a value of zero) is unsellable', () => {
+  addItem({ id: 'E1', sku: 'CHOCOLATE-600', name: 'Chocolate' });
+  assert.equal(isSellable('E1'), false);
+});
+
+// test the state of an item (negative value)
+test('check if an item (with a negative value) is unsellable', () => {
+  addItem({ id: 'E1', sku: 'CHOCOLATE-600', name: 'Chocolate' });
+  adjustStock({ itemId: 'E1', delta: -10, reason: 'SALE', refId: 'c1' });
+  assert.equal(isSellable('E1'), false);
 });

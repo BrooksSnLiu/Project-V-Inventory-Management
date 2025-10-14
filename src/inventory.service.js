@@ -41,6 +41,22 @@ export function getLevel(id) {
   return stock.get(id) ?? 0;
 }
 
+export function isSellable(id)
+{
+  if (stock.get(id) <= 0) 
+  {
+    return false;
+  }
+  else if (stock.get(id) > 0) 
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
 // Testing helper to reset in-memory state between tests
 export function resetForTests() {
   items.clear();
