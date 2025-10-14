@@ -1,5 +1,9 @@
 ### Project-V-Inventory-Management
 
+## Environment
+
+Visual Studio Code
+
 ## How to run
 
 npm install        # install packages
