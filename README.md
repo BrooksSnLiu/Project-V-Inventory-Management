@@ -43,3 +43,9 @@ State is in-memory only, so it resets when the server restarts.
 Unit tests cover adding, reading, deleting, adjusting stock, and idempotency.
 
 Keep it simple: no database, no extras, just core functionality(for now).
+
+## Sprint-2 notes
+
+Added a new feature that checks whether an item is sellable or not.
+
+Added unit tests to make sure that the new feature works as intended.
