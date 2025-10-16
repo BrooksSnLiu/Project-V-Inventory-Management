@@ -8,6 +8,8 @@ import {
   adjustStock,
   getLevel,
   resetForTests,
+  isSellable,
+  getLowStock,
 } from '../src/inventory.service.js';
 
 // reset state before every test so they don't interfere
@@ -51,4 +53,55 @@ test('adjustStock ignores duplicate refId', () => {
   adjustStock({ itemId: 'D1', delta: -1, reason: 'SALE', refId: 't1' });
   adjustStock({ itemId: 'D1', delta: -1, reason: 'SALE', refId: 't1' });
   assert.equal(getLevel('D1'), -1);
+});
+
+// ==== NEW TESTS ====
+
+// sellability: positive / zero / negative / missing
+test('isSellable true when level > 0', () => {
+  addItem({ id: 'E1', sku: 'CHOC-600', name: 'Chocolate', reorderPoint: 5 });
+  adjustStock({ itemId: 'E1', delta: +10, reason: 'REPLENISH', refId: 'e1' });
+  assert.equal(isSellable('E1'), true);
+});
+
+test('isSellable false when level is zero', () => {
+  addItem({ id: 'E2', sku: 'BAR-1', name: 'Bar' });
+  assert.equal(isSellable('E2'), false);
+});
+
+test('isSellable false when level is negative', () => {
+  addItem({ id: 'E3', sku: 'NEG-1', name: 'Neg' });
+  adjustStock({ itemId: 'E3', delta: -3, reason: 'SALE', refId: 'e3' });
+  assert.equal(isSellable('E3'), false);
+});
+
+test('isSellable false for non-existent item', () => {
+  assert.equal(isSellable('NOPE'), false);
+});
+
+// low-stock listing behavior
+test('getLowStock lists items below reorder point', () => {
+  addItem({ id: 'L1', sku: 'RICE-1', name: 'Rice', reorderPoint: 5 });
+  addItem({ id: 'L2', sku: 'BEAN-1', name: 'Beans', reorderPoint: 2 });
+
+  adjustStock({ itemId: 'L1', delta: +3, reason: 'REPLENISH', refId: 'l1' }); // below (3 < 5)
+  adjustStock({ itemId: 'L2', delta: +4, reason: 'REPLENISH', refId: 'l2' }); // not below (4 >= 2)
+
+  const rows = getLowStock().map(r => r.itemId).sort();
+  assert.deepEqual(rows, ['L1']);
+});
+
+// adjustStock returns belowReorderPoint + sellable flags
+test('adjust response includes belowReorderPoint and sellable', () => {
+  addItem({ id: 'F1', sku: 'MILK-1', name: 'Milk', reorderPoint: 10 });
+
+  const r1 = adjustStock({ itemId: 'F1', delta: +8, reason: 'REPLENISH', refId: 'f1' });
+  assert.equal(r1.level, 8);
+  assert.equal(r1.belowReorderPoint, true);
+  assert.equal(r1.sellable, true);
+
+  const r2 = adjustStock({ itemId: 'F1', delta: +5, reason: 'REPLENISH', refId: 'f2' });
+  assert.equal(r2.level, 13);
+  assert.equal(r2.belowReorderPoint, false);
+  assert.equal(r2.sellable, true);
 });
