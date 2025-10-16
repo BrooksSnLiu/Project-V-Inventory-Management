@@ -7,6 +7,12 @@ npm run dev        # start in dev mode
 The service will run on http://localhost:3000.
 npm test           # run unit tests
 
+### Run with Docker
+docker build -t inventory-svc .
+docker run --rm -p 3000:3000 inventory-svc
+check Health: curl http://localhost:3000/api/v1/health
+
+
 ## Project structure
 
 # The project is organized so that logic, controllers, and routes are kept separate:

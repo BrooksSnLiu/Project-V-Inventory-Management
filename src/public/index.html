@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Inventory Management</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg1: #f4f6f9;
+      --bg2: #e8ecf5;
+      --card: #ffffff;
+      --border: #d3d9e1;
+      --text: #1a1d2b;
+      --muted: #6a7283;
+      --accent: #2a65ff;
+      --accent2: #ff4d6d;
+      --ok: #1db954;
+      --warn: #ffba08;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 60px 20px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 1150px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 30px;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      box-shadow: 0 4px 12px rgba(42,101,255,0.3);
+    }
+
+    h1 { font-size: 26px; margin-bottom: 3px; }
+    .sub { color: var(--muted); font-size: 14px; }
+
+    .pill {
+      background: #eef2fb;
+      color: var(--accent);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 16px rgba(0,0,0,0.08);
+    }
+
+    .card h3 { margin-bottom: 12px; color: var(--accent2); }
+    a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #1f4cd6; }
+
+    pre {
+      background: #f5f7fb;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-top: 10px;
+      color: #2c2e38;
+    }
+
+    .small { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div class="logo"></div>
+        <div>
+          <h1>Inventory Management</h1>
+          <div class="sub">Stock Control API</div>
+        </div>
+      </div>
+      <span class="pill" id="db-pill">DB: checking...</span>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h3>Health</h3>
+        <p><a href="/api/v1/health">GET /api/v1/health</a></p>
+        <button onclick="checkHealth()">Check now</button>
+        <pre id="health-out">—</pre>
+      </section>
+
+      <section class="card">
+        <h3>Items</h3>
+        <button onclick="seedItem()">Create Demo Item</button>
+        <p><a href="/api/v1/items/DEMO-ITEM">GET /api/v1/items/DEMO-ITEM</a></p>
+        <p><a href="/api/v1/stock/DEMO-ITEM/level">GET /api/v1/stock/DEMO-ITEM/level</a></p>
+        <pre>{
+  "id": "DEMO-ITEM",
+  "sku": "BURGER-001",
+  "name": "Burger Patty",
+  "reorderPoint": 10
+}</pre>
+        <div id="seed-out" class="small"></div>
+      </section>
+
+      <section class="card">
+        <h3>Stock</h3>
+        <div>
+          <button onclick="replenish()">+10 Replenish</button>
+          <button onclick="sell()">-5 Sale</button>
+        </div>
+        <p><a href="/api/v1/low-stock">GET /api/v1/low-stock</a></p>
+        <pre>{
+  "itemId": "DEMO-ITEM",
+  "delta": -5,
+  "reason": "SALE",
+  "refId": "sale-1"
+}</pre>
+        <div id="adjust-out" class="small"></div>
+      </section>
+    </div>
+
+    <footer>© Inventory Management </footer>
+  </div>
+
+  <script>
+    const out = (id, msg) => document.getElementById(id).textContent = typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2);
+    async function checkHealth(){
+      const r = await fetch('/api/v1/health'); const j = await r.json();
+      out('health-out', j);
+      const pill = document.getElementById('db-pill');
+      pill.textContent = 'DB: ' + j.db;
+      pill.style.color = j.db === 'connected' ? 'var(--ok)' : 'var(--warn)';
+    }
+    async function seedItem(){
+      const r = await fetch('/api/v1/items', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id:'DEMO-ITEM', sku:'BURGER-001', name:'Burger Patty', reorderPoint:10 })
+      });
+      out('seed-out', await r.json());
+    }
+    async function adjust(delta, reason, refId){
+      const r = await fetch('/api/v1/stock/adjust', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ itemId:'DEMO-ITEM', delta, reason, refId })
+      });
+      out('adjust-out', await r.json());
+    }
+    const replenish = () => adjust(+10, 'REPLENISH', 'ui-repl-1');
+    const sell = () => adjust(-5, 'SALE', 'ui-sale-1');
+    checkHealth().catch(()=>{});
+  </script>
+</body>
+</html>

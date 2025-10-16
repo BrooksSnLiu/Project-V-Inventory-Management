@@ -6,6 +6,7 @@ import {
   removeItem,
   adjust,
   level,
+  lowStock,
 } from '../controllers/inventory.controller.js';
 
 const router = Router();
@@ -21,5 +22,8 @@ router.delete('/items/:id', removeItem);
 // stock
 router.post('/stock/adjust', adjust);
 router.get('/stock/:id/level', level);
+
+// low stock (new)
+router.get('/low-stock', lowStock);
 
 export default router;

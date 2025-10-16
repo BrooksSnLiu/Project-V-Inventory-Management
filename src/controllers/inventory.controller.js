@@ -4,15 +4,20 @@ import {
   deleteItem as svcDeleteItem,
   adjustStock as svcAdjustStock,
   getLevel,
+  isSellable,
+  getLowStock,
 } from '../inventory.service.js';
+import { ping } from '../database/index.js';
 
 // helpers for consistent 4xx responses
 function badRequest(res, msg) { return res.status(400).json({ error: msg }); }
 function notFound(res, msg)   { return res.status(404).json({ error: msg }); }
 
 // health check
-export const health = (req, res) =>
-  res.json({ ok: true, env: process.env.NODE_ENV || 'dev' });
+export const health = async (req, res) => {
+  const dbOk = await ping();
+  res.json({ ok: true, db: dbOk ? 'connected' : 'disconnected' });
+};
 
 // create a new item
 export const createItem = (req, res) => {
@@ -46,14 +51,30 @@ export const adjust = (req, res) => {
 
   const result = svcAdjustStock({ itemId, delta, reason, refId });
   if (result.duplicate) {
-    return res.json({ message: 'duplicate ignored', level: result.level });
+    return res.json({
+      message: 'duplicate ignored',
+      level: result.level,
+      belowReorderPoint: result.belowReorderPoint,
+      sellable: result.sellable,
+    });
   }
-  return res.json({ message: 'adjusted', reason: result.reason, level: result.level });
+  return res.json({
+    message: 'adjusted',
+    reason: result.reason,
+    level: result.level,
+    belowReorderPoint: result.belowReorderPoint,
+    sellable: result.sellable,
+  });
 };
 
 // get current stock level for an item
 export const level = (req, res) => {
   const id = req.params.id;
   if (!getItem(id)) return notFound(res, 'item not found');
-  return res.json({ itemId: id, level: getLevel(id) });
+  return res.json({ itemId: id, level: getLevel(id), sellable: isSellable(id) });
+};
+
+// list low-stock items
+export const lowStock = (_req, res) => {
+  return res.json(getLowStock());
 };
