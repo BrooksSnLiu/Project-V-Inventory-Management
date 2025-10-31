@@ -1,5 +1,11 @@
 ### Project-V-Inventory-Management
 
+This project will manage stock from the Menu and Facilities teams respectively.
+
+An item's quantity value will increase when restocked, and decrease when sold.
+
+If an item's quantity reaches zero, then the item will be marked as "Sold-Out", and cannot be sold until it gets restocked.
+
 ## Environment
 
 Visual Studio Code
