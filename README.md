@@ -31,9 +31,11 @@ test/
 
   How to Run
 
+cd backend
 npm install
 npm run dev
 npm test
+
 
 The service runs on:
 http://localhost:3000

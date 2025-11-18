@@ -9,7 +9,7 @@ import {
   getLevel,
   adjustStock,
   resetForTests,
-} from '../src/inventory.service.js';
+} from '../../src/inventory.service.js';
 
 // For now this does nothing, but we keep the pattern.
 beforeEach(() => resetForTests());
