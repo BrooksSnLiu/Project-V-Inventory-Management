@@ -1,59 +1,93 @@
 import {
-  addItem,
-  getItem,
-  deleteItem as svcDeleteItem,
-  adjustStock as svcAdjustStock,
+  getAllItems,
+  getItemById,
   getLevel,
+  adjustStock as svcAdjustStock,
 } from '../inventory.service.js';
 
-// helpers for consistent 4xx responses
-function badRequest(res, msg) { return res.status(400).json({ error: msg }); }
-function notFound(res, msg)   { return res.status(404).json({ error: msg }); }
+function badRequest(res, msg) {
+  return res.status(400).json({ error: msg });
+}
 
-// health check
-export const health = (req, res) =>
+function notFound(res, msg) {
+  return res.status(404).json({ error: msg });
+}
+
+// Simple health check
+export const health = (req, res) => {
   res.json({ ok: true, env: process.env.NODE_ENV || 'dev' });
-
-// create a new item
-export const createItem = (req, res) => {
-  const { id, sku, name, reorderPoint = 0 } = req.body || {};
-  if (!id || !sku || !name) return badRequest(res, 'id, sku, name required');
-  const item = addItem({ id, sku, name, reorderPoint });
-  return res.status(201).json({ message: 'item added', item });
 };
 
-// fetch item by id
-export const readItem = (req, res) => {
-  const it = getItem(req.params.id);
-  if (!it) return notFound(res, 'not found');
-  return res.json(it);
-};
-
-// delete item by id
-export const removeItem = (req, res) => {
-  const ok = svcDeleteItem(req.params.id);
-  if (!ok) return notFound(res, 'item not found');
-  return res.json({ message: 'item deleted', id: req.params.id });
-};
-
-// adjust stock for an item
-export const adjust = (req, res) => {
-  const { itemId, delta, reason, refId } = req.body || {};
-  if (!itemId || !Number.isInteger(delta) || !reason || !refId)
-    return badRequest(res, 'itemId, delta(int), reason, refId required');
-
-  if (!getItem(itemId)) return notFound(res, 'item not found');
-
-  const result = svcAdjustStock({ itemId, delta, reason, refId });
-  if (result.duplicate) {
-    return res.json({ message: 'duplicate ignored', level: result.level });
+//  list all items 
+export const listItems = async (req, res) => {
+  try {
+    const items = await getAllItems();
+    return res.json(items);
+  } catch (err) {
+    console.error('listItems error:', err);
+    return res.status(500).json({ error: 'failed to load items from database' });
   }
-  return res.json({ message: 'adjusted', reason: result.reason, level: result.level });
 };
 
-// get current stock level for an item
-export const level = (req, res) => {
+// For now, Inventory is read-only: creating items is handled by DB/other services.
+export const createItem = (req, res) => {
+  return res.status(501).json({
+    error: 'createItem is not supported here; items are managed by the Database service',
+  });
+};
+
+// Fetch item by id (read-only)
+export const readItem = async (req, res) => {
   const id = req.params.id;
-  if (!getItem(id)) return notFound(res, 'item not found');
-  return res.json({ itemId: id, level: getLevel(id) });
+  try {
+    const item = await getItemById(id);
+    if (!item) return notFound(res, 'item not found');
+    return res.json(item);
+  } catch (err) {
+    console.error('readItem error:', err);
+    return res.status(500).json({ error: 'failed to load item from database' });
+  }
+};
+
+// For now, Inventory does not delete items directly.
+export const removeItem = (req, res) => {
+  return res.status(501).json({
+    error: 'removeItem is not supported here; items are managed by the Database service',
+  });
+};
+
+// Adjust stock for an item – documented but not wired yet
+export const adjust = async (req, res) => {
+  const { itemId, delta, reason, refId } = req.body || {};
+
+  if (!itemId || typeof delta !== 'number') {
+    return badRequest(res, 'itemId and numeric delta are required');
+  }
+
+  try {
+    const item = await getItemById(itemId);
+    if (!item) return notFound(res, 'item not found');
+
+    const result = await svcAdjustStock({ itemId, delta, reason, refId });
+    // Currently svcAdjustStock will throw "not implemented" until wired.
+    return res.json(result);
+  } catch (err) {
+    console.error('adjust error:', err);
+    return res.status(501).json({
+      error: err.message || 'stock adjustment not implemented yet',
+    });
+  }
+};
+
+// Get current stock level for an item
+export const level = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const current = await getLevel(id);
+    if (current === null) return notFound(res, 'item not found');
+    return res.json({ itemId: id, level: current });
+  } catch (err) {
+    console.error('level error:', err);
+    return res.status(500).json({ error: 'failed to load stock level from database' });
+  }
 };

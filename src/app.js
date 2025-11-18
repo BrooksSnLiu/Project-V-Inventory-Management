@@ -1,30 +1,33 @@
-
+// src/app.js
 import express from 'express';
 import inventoryRoutes from './routes/inventory.routes.js';
 
 const app = express();
+
+// Parse JSON bodies
 app.use(express.json());
 
-//API prefix 
+// API prefix for all Inventory routes
 app.use('/api/v1', inventoryRoutes);
 
-// root for quick check
+// Root route for quick manual check
 app.get('/', (req, res) => {
   res.send(`
     <h1>Inventory Service</h1>
-    <p>Status: Working Lets Go!!</p>
-    <p>Try <a href="/api/v1/health">/api/v1/health</a></p>
+    <p>Status: Running</p>
+    <p>Try: <a href="/api/v1/health">/api/v1/health</a></p>
   `);
 });
 
-// 404 for unmatched routes
-app.use((req, res) => res.status(404).json({ error: 'route not found' }));
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'route not found' });
+});
 
-// basic error handler
-// eslint-disable-next-line no-unused-vars
+// Global error handler (for async controllers too)
 app.use((err, req, res, next) => {
   console.error('[ERROR]', err);
-  res.status(500).json({ error: 'internal error' });
+  res.status(500).json({ error: err.message || 'internal server error' });
 });
 
 export default app;
