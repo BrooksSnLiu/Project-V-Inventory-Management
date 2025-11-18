@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Project-V Inventory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Basic reset-ish styles -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f14;
+      color: #f5f5f5;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      height: 100vh;
+      background: radial-gradient(circle at top left, #3b1d92 0, #0f0f14 40%, #050509 100%);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      padding: 24px 18px;
+      background: rgba(6, 6, 10, 0.96);
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 20px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo span.badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #5328ff;
+      color: #fff;
+    }
+    .nav-section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.35);
+      margin-bottom: 4px;
+    }
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .nav-item {
+      padding: 9px 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+    .nav-item span.icon {
+      font-size: 16px;
+    }
+    .nav-item.active {
+      background: linear-gradient(90deg, #6c3bff, #c94bff);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(123, 70, 255, 0.5);
+    }
+    .nav-item:not(.active):hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: #ffffff;
+    }
+    .sidebar-footer {
+      margin-top: auto;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Main layout */
+    .main {
+      display: flex;
+      flex-direction: column;
+      padding: 18px 22px 18px 22px;
+      gap: 18px;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .search-input {
+      flex: 1;
+      padding: 8px 11px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(6, 6, 10, 0.9);
+      color: #ffffff;
+      font-size: 13px;
+      outline: none;
+    }
+    .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+    }
+    .chip {
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .chip.green { border-color: #24e47c; color: #24e47c; }
+    .chip.yellow { border-color: #ffce54; color: #ffce54; }
+    .chip.red { border-color: #ff6b6b; color: #ff6b6b; }
+
+    .avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: linear-gradient(145deg, #6c3bff, #ff4bd8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Content */
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .page-subtitle {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 6px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 10px;
+    }
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      background: rgba(8, 8, 13, 0.96);
+      border-radius: 14px;
+      padding: 10px 10px 9px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .card-label {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.52);
+    }
+    .card-value {
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .card-pill {
+      font-size: 9px;
+      padding: 2px 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      align-self: flex-start;
+      margin-top: 2px;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .table {
+      width: 100%;
+      border-spacing: 0;
+      font-size: 10.5px;
+    }
+    .table thead {
+      color: rgba(255, 255, 255, 0.5);
+      text-align: left;
+    }
+    .table th,
+    .table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+    }
+
+    .tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .tag.low { color: #ffce54; }
+    .tag.oos { color: #ff6b6b; }
+    .tag.ok { color: #24e47c; }
+
+    .btn {
+      font-size: 9px;
+      padding: 4px 7px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(108, 59, 255, 0.95);
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn.outline {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .btn.small {
+      padding: 3px 6px;
+      font-size: 8.5px;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35); }
+
+    .layout-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .rows-2 {
+      display: grid;
+      grid-template-columns: 2fr 1.4fr;
+      gap: 10px;
+      height: calc(100% - 120px);
+    }
+
+    .scroll-y {
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+    }
+    .modal {
+      background: #07070c;
+      border-radius: 14px;
+      padding: 14px 14px 12px 14px;
+      width: 320px;
+      border: 1px solid rgba(255,255,255,0.16);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+    }
+    .modal h3 {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .modal label {
+      display: block;
+      font-size: 9px;
+      margin-bottom: 2px;
+      color: rgba(255,255,255,0.7);
+    }
+    .modal input,
+    .modal select,
+    .modal textarea {
+      width: 100%;
+      padding: 5px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(4,4,8,0.95);
+      color: #fff;
+      font-size: 9px;
+      outline: none;
+    }
+    .modal textarea {
+      resize: vertical;
+      min-height: 40px;
+      max-height: 90px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 70px 1fr;
+      }
+      .logo span.text { display: none; }
+      .nav-item span.label { display: none; }
+      .nav-section-label { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React via CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <!-- App -->
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    // ---- Mock Data ----
+    const initialItems = [
+      { id: 1, name: "Servo Motor A", sku: "ANA-001", category: "Animatronics", store: "Main Park", qty: 3, threshold: 5, updatedSecondsAgo: 5 },
+      { id: 2, name: "Freddy Plush (L)", sku: "TOY-014", category: "Toys", store: "Gift Shop", qty: 15, threshold: 10, updatedSecondsAgo: 8 },
+      { id: 3, name: "Chica Cupcake Mix", sku: "FOOD-102", category: "Food", store: "Kitchen A", qty: 40, threshold: 20, updatedSecondsAgo: 5 },
+      { id: 4, name: "LED Eye Module", sku: "ANA-010", category: "Animatronics", store: "Maintenance", qty: 0, threshold: 5, updatedSecondsAgo: 15 },
+    ];
+
+    const initialLogs = [
+      { id: 1, time: "10:21:03", item: "Freddy Plush (L)", change: -5, from: 20, to: 15, source: "POS API", user: "-", status: "success" },
+      { id: 2, time: "10:20:54", item: "Burger Patty (Box 50)", change: -10, from: 50, to: 40, source: "Menu API", user: "-", status: "success" },
+      { id: 3, time: "10:20:21", item: "Servo Motor A", change: +5, from: 8, to: 13, source: "Manual", user: "Mo", status: "success" },
+      { id: 4, time: "10:19:10", item: "Plush Keychain", change: -3, from: 3, to: 0, source: "POS API", user: "-", status: "oos" },
+    ];
+
+    // ---- Helpers ----
+    function getStatusForItem(item) {
+      if (item.qty === 0) return "oos";
+      if (item.qty <= item.threshold) return "low";
+      return "ok";
+    }
+
+    function SyncChip({ status, lastSeconds }) {
+      if (status === "live") {
+        return (
+          <div className="chip green">
+            <span>●</span> Live · updated {lastSeconds}s ago
+          </div>
+        );
+      }
+      if (status === "stale") {
+        return (
+          <div className="chip yellow">
+            <span>●</span> Stale · last {lastSeconds}s ago
+          </div>
+        );
+      }
+      return (
+        <div className="chip red">
+          <span>●</span> Error · using cached data
+        </div>
+      );
+    }
+
+    // ---- Pages ----
+    function HomePage({ items, logs, sync }) {
+      const totalSkus = items.length;
+      const lowStock = items.filter(i => getStatusForItem(i) === "low").length;
+      const outOfStock = items.filter(i => getStatusForItem(i) === "oos").length;
+      const changes24 = logs.length; // mock
+
+      const animCount = items.filter(i => i.category === "Animatronics").length;
+      const animLow = items.filter(i => i.category === "Animatronics" && getStatusForItem(i) !== "ok").length;
+      const toysCount = items.filter(i => i.category === "Toys").length;
+      const toysLow = items.filter(i => i.category === "Toys" && getStatusForItem(i) !== "ok").length;
+      const foodCount = items.filter(i => i.category === "Food").length;
+      const foodLow = items.filter(i => i.category === "Food" && getStatusForItem(i) !== "ok").length;
+
+      const lowStockList = items
+        .filter(i => getStatusForItem(i) !== "ok")
+        .slice(0, 5);
+
+      const recentLogs = logs.slice(0, 5);
+
+      return (
+        <div className="layout-rows">
+          <div>
+            <div className="page-title">Overview</div>
+            <div className="page-subtitle">
+              Snapshot of live stock across animatronics, toys, and food.
+            </div>
+          </div>
+
+          <div className="grid grid-4">
+            <div className="card">
+              <div className="card-label">Total SKUs</div>
+              <div className="card-value">{totalSkus}</div>
+            </div>
+            <div className="card">
+              <div className="card-label">Low stock items</div>
+              <div className="card-value">{lowStock}</div>
+            </div>
+            <div className="card">
+              <div className="card-label">Out of stock</div>
+              <div className="card-value">{outOfStock}</div>
+            </div>
+            <div className="card">
+              <div className="card-label">Updates (last 24h)</div>
+              <div className="card-value">{changes24}</div>
+              <div className="card-pill">from POS / Menu / Manual</div>
+            </div>
+          </div>
+
+          <div className="rows-2">
+            {/* Left column */}
+            <div className="layout-rows">
+              <div className="card">
+                <div className="card-label">Catalogue snapshot</div>
+                <div className="grid grid-3" style={{ marginTop: "4px" }}>
+                  <div className="card" style={{ padding: "7px" }}>
+                    <div className="card-label">Animatronics parts</div>
+                    <div className="card-value">{animCount}</div>
+                    <div className="card-pill">{animLow} low / oos</div>
+                  </div>
+                  <div className="card" style={{ padding: "7px" }}>
+                    <div className="card-label">Toys &amp; merch</div>
+                    <div className="card-value">{toysCount}</div>
+                    <div className="card-pill">{toysLow} low / oos</div>
+                  </div>
+                  <div className="card" style={{ padding: "7px" }}>
+                    <div className="card-label">Food &amp; ingredients</div>
+                    <div className="card-value">{foodCount}</div>
+                    <div className="card-pill">{foodLow} low / oos</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card scroll-y">
+                <div className="card-label">Low stock items</div>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Cat</th>
+                      <th>Store</th>
+                      <th>Qty</th>
+                      <th>Thr</th>
+                      <th>Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lowStockList.map(item => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{item.category}</td>
+                        <td>{item.store}</td>
+                        <td>{item.qty}</td>
+                        <td>{item.threshold}</td>
+                        <td>{item.updatedSecondsAgo}s ago</td>
+                      </tr>
+                    ))}
+                    {lowStockList.length === 0 && (
+                      <tr>
+                        <td colSpan="6">No low stock items 🎉</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Right column */}
+            <div className="layout-rows">
+              <div className="card scroll-y">
+                <div className="card-label">Recent activity</div>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Item</th>
+                      <th>Δ</th>
+                      <th>Source</th>
+                      <th>User</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentLogs.map(log => (
+                      <tr key={log.id}>
+                        <td>{log.time}</td>
+                        <td>{log.item}</td>
+                        <td>{log.change > 0 ? "+" + log.change : log.change}</td>
+                        <td>{log.source}</td>
+                        <td>{log.user}</td>
+                        <td>{log.status === "success" ? "✅" : "⚠"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="card">
+                <div className="card-label">API / DB health</div>
+                <div style={{ fontSize: "10px", marginTop: "3px" }}>
+                  Inventory DB: ✅ Connected (40ms avg) <br />
+                  POS API: ✅ Connected · Menu API: ✅ Connected <br />
+                  Failures (5m): 0
+                </div>
+                <div style={{ marginTop: "6px" }}>
+                  <SyncChip status={sync.status} lastSeconds={sync.lastSeconds} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function CataloguePage({ items, onOpenAdjust }) {
+      const [search, setSearch] = useState("");
+      const [category, setCategory] = useState("All");
+
+      const filtered = useMemo(() => {
+        return items.filter(i => {
+          const matchSearch =
+            i.name.toLowerCase().includes(search.toLowerCase()) ||
+            i.sku.toLowerCase().includes(search.toLowerCase());
+          const matchCat = category === "All" || i.category === category;
+          return matchSearch && matchCat;
+        });
+      }, [items, search, category]);
+
+      return (
+        <div className="layout-rows">
+          <div>
+            <div className="page-title">Catalogue</div>
+            <div className="page-subtitle">
+              Browse inventory across animatronics, toys, and food.
+            </div>
+          </div>
+
+          <div className="card">
+            <div style={{ display: "flex", gap: "6px", marginBottom: "4px" }}>
+              <input
+                className="search-input"
+                style={{ fontSize: "10px", padding: "4px 7px" }}
+                placeholder="Search by name or SKU..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <select
+                className="chip"
+                style={{ padding: "4px 7px", fontSize: "9px" }}
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+              >
+                <option>All</option>
+                <option>Animatronics</option>
+                <option>Toys</option>
+                <option>Food</option>
+              </select>
+            </div>
+
+            <div className="scroll-y" style={{ maxHeight: "64vh" }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>SKU</th>
+                    <th>Category</th>
+                    <th>Store</th>
+                    <th>Qty</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(item => {
+                    const status = getStatusForItem(item);
+                    return (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{item.sku}</td>
+                        <td>{item.category}</td>
+                        <td>{item.store}</td>
+                        <td>{item.qty}</td>
+                        <td>
+                          <span className={`tag ${status}`}>
+                            {status === "oos"
+                              ? "Out"
+                              : status === "low"
+                              ? "Low"
+                              : "OK"}
+                          </span>
+                        </td>
+                        <td>{item.updatedSecondsAgo}s ago</td>
+                        <td>
+                          {/* manual adjust button - for manager only in real app */}
+                          <button
+                            className="btn small"
+                            onClick={() => onOpenAdjust(item)}
+                          >
+                            Adjust
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan="8">No items match your filters.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function LogsPage({ logs }) {
+      return (
+        <div className="layout-rows">
+          <div>
+            <div className="page-title">Logs</div>
+            <div className="page-subtitle">
+              Full audit trail of stock changes from POS, Menu, and manual edits.
+            </div>
+          </div>
+          <div className="card scroll-y">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Item</th>
+                  <th>Δ</th>
+                  <th>From → To</th>
+                  <th>Source</th>
+                  <th>User</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map(log => (
+                  <tr key={log.id}>
+                    <td>{log.time}</td>
+                    <td>{log.item}</td>
+                    <td>{log.change > 0 ? "+" + log.change : log.change}</td>
+                    <td>{log.from} → {log.to}</td>
+                    <td>{log.source}</td>
+                    <td>{log.user}</td>
+                    <td>{log.status === "success" ? "✅" : log.status === "oos" ? "⚠ OOS" : "⚠"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function SettingsPage() {
+      return (
+        <div className="layout-rows">
+          <div>
+            <div className="page-title">Settings</div>
+            <div className="page-subtitle">
+              Thresholds, integrations, and display rules (demo / read-only).
+            </div>
+          </div>
+
+          <div className="grid grid-2">
+            <div className="card">
+              <div className="card-label">Thresholds</div>
+              <div style={{ fontSize: "10px", marginTop: "4px", display: "grid", gap: "4px" }}>
+                <div>Default low-stock: 5 units</div>
+                <div>Animatronics default: 10 units</div>
+                <div>Toys default: 8 units</div>
+                <div>Food default: 20 units</div>
+              </div>
+            </div>
+            <div className="card">
+              <div className="card-label">Integrations</div>
+              <div style={{ fontSize: "10px", marginTop: "4px" }}>
+                POS API: ✅ /api/pos/inventory<br />
+                Menu API: ✅ /api/menu/inventory<br />
+                Core DB: ✅ /db/inventory
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-2">
+            <div className="card">
+              <div className="card-label">Display &amp; freshness</div>
+              <div style={{ fontSize: "10px", marginTop: "4px" }}>
+                ✓ Show "Last updated" on all rows<br />
+                ✓ Mark data stale if older than 30s<br />
+                ✓ Warn if using cached values on API failure
+              </div>
+            </div>
+            <div className="card">
+              <div className="card-label">Roles (concept)</div>
+              <div style={{ fontSize: "10px", marginTop: "4px" }}>
+                Viewer → read-only<br />
+                Inventory Manager → can Adjust Stock (manual changes logged)
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ---- Modal for Adjust ----
+    function AdjustModal({ item, onClose, onSave }) {
+      const [mode, setMode] = useState("set");
+      const [value, setValue] = useState(item.qty);
+      const [reason, setReason] = useState("Stock correction");
+      const [notes, setNotes] = useState("");
+
+      function handleSubmit() {
+        const num = Number(value);
+        if (isNaN(num)) return;
+        let newQty = item.qty;
+        if (mode === "set") {
+          newQty = num;
+        } else {
+          newQty = item.qty + num;
+        }
+        onSave({ newQty, reason, notes });
+      }
+
+      return (
+        <div className="modal-backdrop" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Adjust Stock · {item.name}</h3>
+            <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.7)" }}>
+              Current: {item.qty} units @ {item.store}
+            </div>
+
+            <div>
+              <label>Change type</label>
+              <select value={mode} onChange={e => setMode(e.target.value)}>
+                <option value="set">Set exact quantity</option>
+                <option value="delta">Add / subtract amount</option>
+              </select>
+            </div>
+
+            <div>
+              <label>{mode === "set" ? "New quantity" : "Amount (+ / -)"}</label>
+              <input
+                type="number"
+                value={value}
+                onChange={e => setValue(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label>Reason</label>
+              <select value={reason} onChange={e => setReason(e.target.value)}>
+                <option>Stock correction</option>
+                <option>Shipment received</option>
+                <option>Damaged</option>
+                <option>Lost</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Notes (optional)</label>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Visible in logs for audit."
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn outline small" onClick={onClose}>Cancel</button>
+              <button className="btn small" onClick={handleSubmit}>Save &amp; log</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ---- App Shell ----
+    function App() {
+      const [active, setActive] = useState("Home");
+      const [items, setItems] = useState(initialItems);
+      const [logs, setLogs] = useState(initialLogs);
+      const [sync] = useState({ status: "live", lastSeconds: 3 });
+      const [adjustItem, setAdjustItem] = useState(null);
+
+      function handleAdjustSave({ newQty, reason, notes }) {
+        setItems(prev => prev.map(i =>
+          i.id === adjustItem.id
+            ? { ...i, qty: newQty, updatedSecondsAgo: 0 }
+            : i
+        ));
+        const now = new Date();
+        const time = now.toTimeString().slice(0,8);
+        const log = {
+          id: logs.length + 1,
+          time,
+          item: adjustItem.name,
+          change: newQty - adjustItem.qty,
+          from: adjustItem.qty,
+          to: newQty,
+          source: "Manual",
+          user: "Mo", // placeholder; hook into auth later
+          status: "success",
+          notes,
+          reason
+        };
+        setLogs(prev => [log, ...prev]);
+        setAdjustItem(null);
+      }
+
+      return (
+        <div className="app-shell">
+          {/* Sidebar */}
+          <aside className="sidebar">
+            <div className="logo">
+              <span>🟣</span>
+              <span className="text">Project-V Inventory</span>
+              <span className="badge">demo</span>
+            </div>
+
+            <div>
+              <div className="nav-section-label">Main</div>
+              <div className="nav-list">
+                <div
+                  className={"nav-item " + (active === "Home" ? "active" : "")}
+                  onClick={() => setActive("Home")}
+                >
+                  <span className="icon">🏠</span>
+                  <span className="label">Home</span>
+                </div>
+                <div
+                  className={"nav-item " + (active === "Catalogue" ? "active" : "")}
+                  onClick={() => setActive("Catalogue")}
+                >
+                  <span className="icon">📦</span>
+                  <span className="label">Catalogue</span>
+                </div>
+                <div
+                  className={"nav-item " + (active === "Logs" ? "active" : "")}
+                  onClick={() => setActive("Logs")}
+                >
+                  <span className="icon">📜</span>
+                  <span className="label">Logs</span>
+                </div>
+                <div
+                  className={"nav-item " + (active === "Settings" ? "active" : "")}
+                  onClick={() => setActive("Settings")}
+                >
+                  <span className="icon">⚙️</span>
+                  <span className="label">Settings</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="sidebar-footer">
+              v0.1 • Data from test APIs • All manual changes logged
+            </div>
+          </aside>
+
+          {/* Main */}
+          <main className="main">
+            {/* Topbar */}
+            <div className="topbar">
+              <input
+                className="search-input"
+                placeholder="Quick search (coming soon )…"
+              />
+              <SyncChip status={sync.status} lastSeconds={sync.lastSeconds} />
+              <div className="chip" title="Environment">
+                env: TEST
+              </div>
+              <div className="avatar" title="You">Mo</div>
+            </div>
+
+            {/* Content */}
+            {active === "Home" && (
+              <HomePage items={items} logs={logs} sync={sync} />
+            )}
+            {active === "Catalogue" && (
+              <CataloguePage
+                items={items}
+                onOpenAdjust={setAdjustItem}
+              />
+            )}
+            {active === "Logs" && <LogsPage logs={logs} />}
+            {active === "Settings" && <SettingsPage />}
+
+            {adjustItem && (
+              <AdjustModal
+                item={adjustItem}
+                onClose={() => setAdjustItem(null)}
+                onSave={handleAdjustSave}
+              />
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
