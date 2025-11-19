@@ -1,61 +1,40 @@
-Project-V Inventory Management Service
-
-The Inventory Management service provides read-only inventory data to other modules in the enterprise system, including the Menu, POS, and Transactions teams.
-All inventory data comes from the Database team’s API.
-This service does not store or modify data locally.
-
-Tech Stack
-
-Node.js
-
-Express
-
-ES Modules
-
-node:test for unit tests
-
-Project Structure
-
-src/
-  app.js                   Sets up Express application and middleware
-  server.js                Starts the HTTP server
-  inventory.service.js     Business logic (DB-driven, no local state)
-  controllers/
-    inventory.controller.js  Route handler functions
-  routes/
-    inventory.routes.js      API routes
-
-test/
-  service.test.js           Unit tests for the service layer
-
-
-  How to Run
-
-cd backend
+🚀 Quick Start
+1. Install dependencies
 npm install
+
+2. Configure environment
+
+Create a .env file and set:
+
+DB_API_BASE=<database-api-url>
+
+
+If this value is missing, all read operations will fail with:
+
+DB API base URL not configured yet
+
+3. Run the service
 npm run dev
+
+4. Run tests
 npm test
 
+📁 Project Structure
+src/
+  app.js                  Express app + middleware setup
+  server.js               Starts the HTTP server
+  inventory.service.js    Business logic (DB-driven, no local state)
 
-The service runs on:
-http://localhost:3000
+  controllers/
+    inventory.controller.js    Handles API requests
 
-Environment Variables
+  routes/
+    inventory.routes.js        Defines API endpoints
 
-The service requires a Database API base URL:
+test/
+  service.test.js         Unit tests for DB-driven service behavior
 
-DB_API_BASE=<database-service-url>
-
-
-Example (placeholder only):
-
-DB_API_BASE=http://db-team-service:4000
-
-
-If this value is not set, all read operations will fail with the error:
-"DB API base URL not configured yet"
-
-API Endpoints
+📡 API Endpoints
 
 All endpoints are prefixed with /api/v1.
 
@@ -64,71 +43,88 @@ GET /health
 
 Returns basic service status.
 
-Inventory (Read-Only)
+📦 Inventory (Read-Only)
 
-These endpoints fetch data from the Database service.
+These routes proxy data from the Database Team.
 
 GET /items
+
+Retrieve all items from the Database service.
+
 GET /items/:id
+
+Retrieve a single item by ID.
+
 GET /stock/:id/level
 
-Not Supported in This Service
+Retrieve stock level for a specific item.
 
-The Inventory module does not create or delete inventory items.
-These operations belong to the Database or Facilities/Menu workflows.
+🚫 Not Supported in This Service
 
-Calls to these endpoints will return 501 Not Implemented:
+The Inventory module does NOT perform create/update/delete operations.
+
+These routes return 501 Not Implemented:
 
 POST /items
+
 DELETE /items/:id
 
-Stock Adjustment (Future Integration)
+📉 Stock Adjustment (Future Integration)
 POST /stock/adjust
 
+Present only for API contract alignment.
+Currently returns a “not implemented” message until integration with the Transactions Team is completed.
 
-This endpoint exists for the API contract but currently returns a
-"not implemented" message until integration with the Transactions module is completed.
-
-Architecture Summary
+🏗️ Architecture Summary
 Database Service (source of truth)
-         ↓
+        ↓
 Inventory Service (this module)
-         ↓
-Menu, POS, Transactions teams consume the Inventory API
+        ↓
+Menu Team / POS / Transactions Team / Facilities
 
 
-The Inventory service:
+The Inventory Service:
 
-Does not store data locally
+Has no local database
 
-Maps Database API responses into a consistent internal item format
+Reads everything from the DB Team’s service
 
-Exposes stable APIs for other teams
+Maps values into a consistent internal format
 
-Testing
+Provides a stable API for consuming teams
+
+🧪 Testing
 
 Tests verify that:
 
-Read operations fail clearly when DB_API_BASE is not configured
+Read operations fail clearly when DB_API_BASE is missing
 
 adjustStock is intentionally not implemented
 
-No in-memory storage is used
+No in-memory Maps or local storage exists
 
-Tests align with the new DB-driven architecture
+Service layer correctly forwards calls to Database API
 
-Sprint 3 Summary
+Mapping logic produces consistent item/stock output
 
-Converted the entire module to a DB-driven architecture
+Error handling follows the new DB-driven architecture
 
-Removed in-memory Maps
+Run all tests:
 
-Added mapping layer for Database responses
+npm test
 
-Updated controllers and routes
+📝 Sprint 3 Summary
 
-Updated unit tests
+Migrated completely to Database-driven architecture
 
-Added improved error handling
+Removed in-memory storage (Maps)
 
-Documented integration points with other modules
+Added item/stock mapping layer
+
+Updated controllers, services, and routes
+
+Improved error handling and failure messages
+
+Updated unit tests to match DB-driven flow
+
+Documented integration for other enterprise teams
