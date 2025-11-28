@@ -2,7 +2,7 @@
 
 ## Menu
 - Manages the items created by the menu team
-- Stock levels for each item will go up and down accordingly
+- Stock levels for each item will go up and down accordingly                     
 
 ## Transaction
 - Details of transactions will be sent to the transaction team
