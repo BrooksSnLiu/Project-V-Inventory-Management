@@ -4,7 +4,7 @@
 The Inventory Management Service provides read-only inventory data to other modules in the Project-V enterprise system.
 All inventory information is fetched directly from the Database Team’s API, which acts as the single source of truth.
 
-This service:
+This service:                
 
 - Does not store any local data
 - Does not modify or create inventory records
