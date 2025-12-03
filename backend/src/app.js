@@ -1,22 +1,27 @@
 // src/app.js
 import express from 'express';
+import cors from 'cors'; 
+import path from 'path';
+import { fileURLToPath } from 'url';
 import inventoryRoutes from './routes/inventory.routes.js';
 
-const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Parse JSON bodies
+const app = express();
+app.use(cors());
+
 app.use(express.json());
 
-// API prefix for all Inventory routes
+// serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Inventory API routes
 app.use('/api/v1', inventoryRoutes);
 
-// Root route for quick manual check
+// Root route → serve index.html
 app.get('/', (req, res) => {
-  res.send(`
-    <h1>Inventory Service</h1>
-    <p>Status: Running</p>
-    <p>Try: <a href="/api/v1/health">/api/v1/health</a></p>
-  `);
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // 404 handler
@@ -24,7 +29,7 @@ app.use((req, res) => {
   res.status(404).json({ error: 'route not found' });
 });
 
-// Global error handler (for async controllers too)
+// Global error handler
 app.use((err, req, res, next) => {
   console.error('[ERROR]', err);
   res.status(500).json({ error: err.message || 'internal server error' });

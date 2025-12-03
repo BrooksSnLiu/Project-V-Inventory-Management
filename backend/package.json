@@ -1,6 +1,6 @@
 {
   "name": "inventory-service",
-  "version": "0.1.0", 
+  "version": "0.1.0",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
@@ -10,6 +10,8 @@
     "test:watch": "node --test --watch"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^4.19.2"
   },
   "devDependencies": {

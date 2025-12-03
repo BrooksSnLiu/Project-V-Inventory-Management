@@ -1,39 +1,103 @@
-// Base URL for the Database team's API.
-// Set this in our environment later: DB_API_BASE="http://their-service-url"
-const DB_API_BASE = process.env.DB_API_BASE || 'http://TODO-DB-URL';
 
-// Convert one DB item into our internal shape:
-// { id, sku, name, quantity, reorderPoint }
-function mapDbItemToInventoryItem(dbItem) {
-  if (!dbItem || typeof dbItem !== 'object') {
+const {
+  DB_API_BASE,
+  DB_API_USERNAME,
+  DB_API_PASSWORD,
+  INVENTORY_COLLECTION,
+} = process.env;
+
+function ensureDbEnv() {
+  if (!DB_API_BASE || !DB_API_USERNAME || !DB_API_PASSWORD || !INVENTORY_COLLECTION) {
+    throw new Error(
+      'Database middleware configuration missing (DB_API_BASE, DB_API_USERNAME, DB_API_PASSWORD, INVENTORY_COLLECTION)'
+    );
+  }
+}
+
+async function login() {
+  ensureDbEnv();
+
+  const resp = await fetch(`${DB_API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: '*/*',
+    },
+    body: JSON.stringify({
+      username: DB_API_USERNAME,
+      password: DB_API_PASSWORD,
+    }),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`DB auth failed (${resp.status}): ${text.slice(0, 200)}`);
+  }
+
+  const data = await resp.json();
+  if (!data || !data.token) {
+    throw new Error('DB auth response missing token');
+  }
+
+  return data.token;
+}
+
+async function callDbApi(path, { method = 'GET', body } = {}) {
+  ensureDbEnv();
+
+  const token = await login();
+
+  const resp = await fetch(`${DB_API_BASE}${path}`, {
+    method,
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      authorization: `Bearer ${token}`,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(
+      `DB API ${method} ${path} failed (${resp.status}): ${text.slice(0, 200)}`
+    );
+  }
+
+  return resp.json();
+}
+
+function mapDbItemToInventoryItem(doc) {
+  if (!doc || typeof doc !== 'object') {
     throw new Error('Invalid DB item format');
   }
 
   const id =
-    dbItem.id ??
-    dbItem.itemId ??
-    dbItem.item_id;
+    doc.itemId ??
+    doc.id ??
+    doc.item_id ??
+    (doc._id ? String(doc._id) : null);
 
   const name =
-    dbItem.name ??
-    dbItem.itemName ??
-    dbItem.item_name;
+    doc.name ??
+    doc.itemName ??
+    doc.item_name;
 
   const sku =
-    dbItem.sku ??
-    dbItem.code ??
+    doc.sku ??
+    doc.code ??
     null;
 
   const quantityRaw =
-    dbItem.quantity ??
-    dbItem.qty ??
-    dbItem.stock ??
+    doc.quantity ??
+    doc.qty ??
+    doc.stock ??
     0;
 
   const reorderRaw =
-    dbItem.reorderPoint ??
-    dbItem.reorder_point ??
-    dbItem.reorder ??
+    doc.reorderPoint ??
+    doc.reorder_point ??
+    doc.reorder ??
     0;
 
   if (!id || !name) {
@@ -52,54 +116,55 @@ function mapDbItemToInventoryItem(dbItem) {
   };
 }
 
-// Fetch all inventory items from the DB API and map them.
 async function fetchAllItemsFromDb() {
-  if (!DB_API_BASE || DB_API_BASE.startsWith('http://TODO-DB-URL')) {
-    throw new Error('DB API base URL not configured yet');
-  }
+  const body = {
+    filter: {},
+    projection: {},
+    sort: { itemId: 1 },
+    limit: 500,
+    skip: 0,
+  };
 
-  const url = `${DB_API_BASE}/inventory-items`; //needs update 
-  const res = await fetch(url);
+  const data = await callDbApi(
+    `/api/collections/${INVENTORY_COLLECTION}/find`,
+    { method: 'POST', body }
+  );
 
-  if (!res.ok) {
-    throw new Error(`DB API error: ${res.status} ${res.statusText}`);
-  }
-
-  const raw = await res.json();
-
-  if (!Array.isArray(raw)) {
-    throw new Error('DB API did not return an array of items');
-  }
-
-  return raw.map(mapDbItemToInventoryItem);
+  const docs = Array.isArray(data.documents) ? data.documents : [];
+  return docs.map(mapDbItemToInventoryItem);
 }
 
-// Public service functions
+async function fetchItemByIdFromDb(itemId) {
+  const body = {
+    filter: { itemId },
+    projection: {},
+    sort: {},
+    limit: 1,
+    skip: 0,
+  };
+
+  const data = await callDbApi(
+    `/api/collections/${INVENTORY_COLLECTION}/find`,
+    { method: 'POST', body }
+  );
+
+  const docs = Array.isArray(data.documents) ? data.documents : [];
+  return docs.length > 0 ? mapDbItemToInventoryItem(docs[0]) : null;
+}
 
 export async function getAllItems() {
   return fetchAllItemsFromDb();
 }
 
 export async function getItemById(id) {
-  if (!id) throw new Error('id is required');
-  const items = await fetchAllItemsFromDb();
-  return items.find(item => item.id === String(id)) || null;
+  if (!id) {
+    throw new Error('id is required');
+  }
+  return fetchItemByIdFromDb(String(id));
 }
 
 export async function getLevel(id) {
   const item = await getItemById(id);
   if (!item) return null;
   return item.quantity;
-}
-
-// Not wired yet: will call Transactions/DB when integration is ready.
-export async function adjustStock({ itemId, delta, reason, refId }) {
-  throw new Error(
-    'adjustStock is not implemented yet; waiting for DB/Transactions integration'
-  );
-}
-
-// Kept for test compatibility; nothing to reset because we are DB-driven.
-export function resetForTests() {
-  return;
 }
