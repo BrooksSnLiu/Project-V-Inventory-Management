@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: projectv-inventory-backend
+    ports:
+      - "10000:10000"
+    environment:
+      # DB middleware URL (your Node+Swagger thing on port 3000)
+      # From INSIDE the container, "host.docker.internal" points to your host.
+      DB_API_BASE: "http://host.docker.internal:3000"
+      DB_API_USERNAME: "admin"
+      DB_API_PASSWORD: "yourpassword"
+      INVENTORY_COLLECTION: "inventory_items"
+      PORT: "10000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: projectv-inventory-frontend
+    ports:
+      - "7000:7000"
+    environment:
+      # Compiled into the React app at build/dev time – used by browser
+      VITE_INVENTORY_API_BASE: "http://localhost:10000/api/v1"
+    depends_on:
+      - backend

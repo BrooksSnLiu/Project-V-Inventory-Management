@@ -1,0 +1,28 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist
+coverage
+
+# Git metadata
+.git
+.gitignore
+.gitattributes
+
+# Logs
+*.log
+logs/
+
+# Editor / OS files
+.DS_Store
+.vscode/
+.idea/
+*.swp

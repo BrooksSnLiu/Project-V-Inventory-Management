@@ -1,0 +1,29 @@
+# Node modules 
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build artifacts
+dist
+coverage
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Editor / OS junk
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
