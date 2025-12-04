@@ -5,9 +5,9 @@ The **Inventory Management Service** provides **read-only** inventory data.
 All information is retrieved directly from the configured Database API, which acts as the source of truth.
 
 The service:
-- Does not store any local data
-- Does not modify inventory
-- Exposes clean and consistent endpoints for retrieving item information
+- All data is fetched directly from the central Database API
+- Inventory information is always real-time and up-to-date
+- The service exposes stable, read-only endpoints for consumers
 
 ---
 
@@ -24,9 +24,10 @@ PORT=10000
 
 ### Installation
 ## Install dependencies
-Bashnpm install
+npm install
+
 ## Start the server (development)
-Bashnpm run dev
+npm run dev
 The service will be available at:
 http://localhost:10000
 
