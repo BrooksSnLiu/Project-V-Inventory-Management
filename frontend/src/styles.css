@@ -482,3 +482,24 @@ html, body {
   height: 100%;
   overflow-y: auto;
 }
+
+/* Overall app background – softer, lighter purple */
+.app-shell {
+  background: radial-gradient(circle at top left, #3b2a6f 0, #121321 45%, #05060a 100%);
+}
+
+/* Main content area */
+.main {
+  background: linear-gradient(180deg, rgba(90, 70, 160, 0.6), #05060a);
+}
+
+/* Cards (the black boxes) – slightly lighter */
+.card {
+  background: #151826;          /* was closer to #0b0c10 */
+  border-color: #252843;
+}
+
+/* Optional: top-item bar fill – a bit brighter purple, same style */
+.top-item-bar-fill {
+  background: linear-gradient(90deg, #e879f9, #a855f7);
+}
