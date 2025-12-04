@@ -1,0 +1,18 @@
+# Project name
+PROJECT_NAME           = "Project-V Inventory Management - Backend"
+
+# Where docs will go
+OUTPUT_DIRECTORY       = docs
+
+# What to scan
+INPUT                  = src test
+RECURSIVE              = YES
+
+# We are using JS/TS style files:
+FILE_PATTERNS          = *.js *.jsx
+
+# Make HTML docs
+GENERATE_HTML          = YES
+
+EXTRACT_ALL            = YES
+WARN_IF_UNDOCUMENTED   = NO

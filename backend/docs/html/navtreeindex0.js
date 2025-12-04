@@ -1,0 +1,20 @@
+var NAVTREEINDEX0 =
+{
+"app_8js.html":[0,0,0,2],
+"dir_13e138d54eb8818da29c3992edef070a.html":[0,0,1],
+"dir_29f5acfcb9774392b15237ff4f3488c0.html":[0,0,0,1],
+"dir_68267d1309a1af8e8297ef4c3efbcdba.html":[0,0,0],
+"dir_6a07fdbc4b50e86806a88566ca8f66e4.html":[0,0,1,1],
+"dir_bbd6674d859f4cefaacb708974cac240.html":[0,0,0,0],
+"dir_bbf9f1b56ba6c621651be8934a24eced.html":[0,0,1,0],
+"files.html":[0,0],
+"index.html":[],
+"inventory_8controller_8js.html":[0,0,0,0,0],
+"inventory_8routes_8js.html":[0,0,0,1,0],
+"inventory_8service_8config_8test_8js.html":[0,0,1,1,0],
+"inventory_8service_8happy_8test_8js.html":[0,0,1,1,1],
+"inventory_8service_8http_8test_8js.html":[0,0,1,0,0],
+"inventory_8service_8js.html":[0,0,0,3],
+"pages.html":[],
+"server_8js.html":[0,0,0,4]
+};

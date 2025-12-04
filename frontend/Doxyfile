@@ -1,0 +1,19 @@
+# Project name
+PROJECT_NAME           = "Project-V Inventory management - Frontend"
+
+# Where docs will go
+OUTPUT_DIRECTORY       = docs
+
+# What to scan
+INPUT                  = src 
+RECURSIVE              = YES
+
+
+FILE_PATTERNS          = *.js *.jsx
+
+# Make HTML docs
+GENERATE_HTML          = YES
+
+
+EXTRACT_ALL            = YES
+WARN_IF_UNDOCUMENTED   = NO
