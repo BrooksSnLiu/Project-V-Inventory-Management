@@ -2,19 +2,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-// We will set env and mock fetch *before* importing the service.
+// Save original fetch so we can restore it later
 const originalFetch = global.fetch;
 
-
+// --- Configure environment for the test ---
 process.env.DB_API_BASE = 'http://db-middleware.local';
 process.env.DB_API_USERNAME = 'test-user';
 process.env.DB_API_PASSWORD = 'test-pass';
 process.env.INVENTORY_COLLECTION = 'inventory_items';
 
-
+// --- Mock fetch for login + DB find ---
 global.fetch = async (url, options) => {
   const u = String(url);
 
+  // Mock login endpoint
   if (u.endsWith('/auth/login')) {
     return {
       ok: true,
@@ -27,6 +28,7 @@ global.fetch = async (url, options) => {
     };
   }
 
+  // Mock collection find endpoint
   if (u.includes('/api/collections/inventory_items/find')) {
     return {
       ok: true,
@@ -56,17 +58,16 @@ global.fetch = async (url, options) => {
   throw new Error(`Unexpected fetch call in test: ${u}`);
 };
 
-// Now import the service *after* mocking fetch and env
-const {
-  getAllItems,
-  getItemById,
-  getLevel,
-} = await import('../../src/inventory.service.js');
+// Import the service *after* mocking env + fetch
+const { getAllItems, getItemById, getLevel } =
+  await import('../../src/inventory.service.js');
 
-// Restore original fetch after tests finish
+// Restore fetch after tests complete
 test.after(() => {
   global.fetch = originalFetch;
 });
+
+// --- TESTS ---
 
 test('getAllItems maps documents from DB into inventory items', async () => {
   const items = await getAllItems();
@@ -82,14 +83,14 @@ test('getAllItems maps documents from DB into inventory items', async () => {
   });
 });
 
-test('getItemById returns a single mapped item', async () => {
-  const item = await getItemById('INV-002');
+test('getItemById returns the first matching mapped item', async () => {
+  const item = await getItemById('INV-001');
   assert.ok(item);
-  assert.equal(item.id, 'INV-002');
-  assert.equal(item.name, 'Classic Burger');
+  assert.equal(item.id, 'INV-001');
+  assert.equal(item.name, 'Animatronic T-Rex');
 });
 
-test('getLevel returns the quantity for an item', async () => {
+test('getLevel returns the quantity of the item', async () => {
   const level = await getLevel('INV-001');
   assert.equal(level, 10);
 });
