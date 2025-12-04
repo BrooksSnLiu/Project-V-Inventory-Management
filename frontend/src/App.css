@@ -40,3 +40,27 @@
 .read-the-docs {
   color: #888;
 }
+
+.home-summary-card {
+  margin-top: 0.5rem;
+}
+
+.summary-stats-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.summary-stat {
+  min-width: 140px;
+}
+
+.summary-stat .stat-label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.summary-stat .stat-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+}

@@ -1,105 +1,65 @@
-// src/pages/CataloguePage.jsx
-import React, { useMemo, useState } from "react";
-import { getStatusForItem } from "../helpers.js";
 
-export function CataloguePage({ items, onOpenAdjust }) {
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
+import React from 'react';
+import { summarizeItems } from '../helpers.js';
 
-  const filtered = useMemo(() => {
-    return items.filter((i) => {
-      const matchSearch =
-        i.name.toLowerCase().includes(search.toLowerCase()) ||
-        (i.sku || "").toLowerCase().includes(search.toLowerCase());
-      const matchCat = category === "All" || i.category === category;
-      return matchSearch && matchCat;
-    });
-  }, [items, search, category]);
+export default function CataloguePage({ items = [], lastUpdated }) {
+  const { total } = summarizeItems(items);
+
+  const rows = items.map((raw) => {
+    const quantity =
+      typeof raw.quantity === 'number'
+        ? raw.quantity
+        : typeof raw.quantityOnHand === 'number'
+        ? raw.quantityOnHand
+        : 0;
+
+    const reorderPoint =
+      typeof raw.reorderPoint === 'number' ? raw.reorderPoint : 0;
+
+    let status = 'OK';
+    if (quantity === 0) status = 'Out';
+    else if (quantity > 0 && quantity <= reorderPoint) status = 'Low';
+
+    return {
+      id: raw.id,
+      name: raw.name,
+      sku: raw.sku,
+      quantity,
+      reorderPoint,
+      status,
+    };
+  });
 
   return (
-    <div className="layout-rows">
-      <div>
-        <div className="page-title">Catalogue</div>
-        <div className="page-subtitle">
-          Browse inventory across animatronics, toys, and food.
-        </div>
-      </div>
+    <div className="page page-catalogue">
+      <header className="page-header">
+        <h1>Catalogue</h1>
+        <p>Browse {total} inventory items from the core database.</p>
+      </header>
 
       <div className="card">
-        <div style={{ display: "flex", gap: "6px", marginBottom: "4px" }}>
-          <input
-            className="search-input"
-            style={{ fontSize: "10px", padding: "4px 7px" }}
-            placeholder="Search by name or SKU..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <select
-            className="chip"
-            style={{ padding: "4px 7px", fontSize: "9px" }}
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            <option>All</option>
-            <option>Animatronics</option>
-            <option>Toys</option>
-            <option>Food</option>
-          </select>
-        </div>
-
-        <div className="scroll-y" style={{ maxHeight: "64vh" }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>SKU</th>
-                <th>Category</th>
-                <th>Store</th>
-                <th>Qty</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th></th>
+        <table className="table table-catalogue">
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'left' }}>Item</th>
+              <th>SKU</th>
+              <th>Qty</th>
+              <th>Reorder point</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td style={{ textAlign: 'left' }}>{row.name}</td>
+                <td>{row.sku}</td>
+                <td>{row.quantity}</td>
+                <td>{row.reorderPoint}</td>
+                <td>{row.status}</td>
               </tr>
-            </thead>
-            <tbody>
-              {filtered.map((item) => {
-                const status = getStatusForItem(item);
-                return (
-                  <tr key={item.id}>
-                    <td>{item.name}</td>
-                    <td>{item.sku}</td>
-                    <td>{item.category}</td>
-                    <td>{item.store}</td>
-                    <td>{item.qty}</td>
-                    <td>
-                      <span className={`tag ${status}`}>
-                        {status === "oos"
-                          ? "Out"
-                          : status === "low"
-                          ? "Low"
-                          : "OK"}
-                      </span>
-                    </td>
-                    <td>{item.updatedSecondsAgo}s ago</td>
-                    <td>
-                      <button
-                        className="btn small"
-                        onClick={() => onOpenAdjust(item)}
-                      >
-                        Adjust
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan="8">No items match your filters.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

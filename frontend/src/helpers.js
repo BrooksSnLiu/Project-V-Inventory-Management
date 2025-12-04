@@ -1,28 +1,45 @@
-// src/helpers.js
 
-// Convert backend item into the shape the UI expects
-export function mapBackendItem(it, index) {
-  const qtyRaw = it.quantity ?? it.qty ?? 0;
-  const thresholdRaw = it.reorderPoint ?? it.threshold ?? 0;
+// Each item at minimum has: { id, name, sku, quantity, reorderPoint }
 
-  const qty = Number(qtyRaw);
-  const threshold = Number(thresholdRaw);
+export function summarizeItems(items = []) {
+  const total = items.length;
+
+  let lowStock = 0;
+  let outOfStock = 0;
+  const lowStockItems = [];
+
+  for (const raw of items) {
+    const quantity =
+      typeof raw.quantity === 'number'
+        ? raw.quantity
+        : typeof raw.quantityOnHand === 'number'
+        ? raw.quantityOnHand
+        : 0;
+
+    const reorderPoint =
+      typeof raw.reorderPoint === 'number' ? raw.reorderPoint : 0;
+
+    if (quantity === 0) {
+      outOfStock += 1;
+    } else if (quantity > 0 && quantity <= reorderPoint) {
+      lowStock += 1;
+    }
+
+    if (quantity === 0 || quantity <= reorderPoint) {
+      lowStockItems.push({
+        id: raw.id,
+        name: raw.name,
+        sku: raw.sku,
+        quantity,
+        reorderPoint,
+      });
+    }
+  }
 
   return {
-    id: it.id ?? it.itemId ?? index + 1,
-    name: it.name ?? it.itemName ?? "Unknown item",
-    sku: it.sku ?? "",
-    category: it.category ?? "Unknown",
-    store: it.store ?? "Unknown",
-    qty: Number.isNaN(qty) ? 0 : qty,
-    threshold: Number.isNaN(threshold) ? 0 : threshold,
-    updatedSecondsAgo: 0,
+    total,
+    lowStock,
+    outOfStock,
+    lowStockItems,
   };
-}
-
-// Compute status used for tags / counts
-export function getStatusForItem(item) {
-  if (item.qty === 0) return "oos";
-  if (item.qty <= item.threshold) return "low";
-  return "ok";
 }

@@ -1,71 +1,30 @@
 // src/App.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { API_BASE } from "./config.js";
-import { mapBackendItem } from "./helpers.js";
-import { SyncChip } from "./components/SyncChip.jsx";
-import { AdjustModal } from "./components/AdjustModal.jsx";
-import { HomePage } from "./pages/HomePage.jsx";
-import { CataloguePage } from "./pages/CataloguePage.jsx";
-import { LogsPage } from "./pages/LogsPage.jsx";
-import { SettingsPage } from "./pages/SettingsPage.jsx";
-
-// Demo logs (still local)
-const initialLogs = [
-  {
-    id: 1,
-    time: "10:21:03",
-    item: "Freddy Plush (L)",
-    change: -5,
-    from: 20,
-    to: 15,
-    source: "POS API",
-    user: "-",
-    status: "success",
-  },
-  {
-    id: 2,
-    time: "10:20:54",
-    item: "Burger Patty (Box 50)",
-    change: -10,
-    from: 50,
-    to: 40,
-    source: "Menu API",
-    user: "-",
-    status: "success",
-  },
-  {
-    id: 3,
-    time: "10:20:21",
-    item: "Servo Motor A",
-    change: +5,
-    from: 8,
-    to: 13,
-    source: "Manual",
-    user: "Mo",
-    status: "success",
-  },
-  {
-    id: 4,
-    time: "10:19:10",
-    item: "Plush Keychain",
-    change: -3,
-    from: 3,
-    to: 0,
-    source: "POS API",
-    user: "-",
-    status: "oos",
-  },
-];
+import AdjustModal from "./components/AdjustModal.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import CataloguePage from "./pages/CataloguePage.jsx";
 
 function App() {
   const [active, setActive] = useState("Home");
+
+  // Raw items coming straight from backend /api/v1/items
   const [items, setItems] = useState([]);
-  const [logs, setLogs] = useState(initialLogs);
-  const [sync, setSync] = useState({ status: "live", lastSeconds: 3 });
+
+  // Local logs (only for manual adjustments, not sent to backend)
+  const [logs, setLogs] = useState([]);
+
+  // You’re not showing sync anywhere now, but I’m leaving it
+  // in case you want to use it later.
+  const [sync, setSync] = useState({ status: "live", lastSeconds: 0 });
+
   const [adjustItem, setAdjustItem] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // 🔍 search text from the top bar
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Load items from backend once on mount
   useEffect(() => {
@@ -78,15 +37,19 @@ function App() {
         if (!res.ok) {
           throw new Error(`Backend returned ${res.status}`);
         }
+
         const data = await res.json();
 
-        const mapped = data.map(mapBackendItem);
-        setItems(mapped);
+        if (!Array.isArray(data)) {
+          throw new Error("Backend returned non-array");
+        }
+
+        setItems(data);
         setSync({ status: "live", lastSeconds: 0 });
       } catch (err) {
         console.error("Failed to load items from backend:", err);
         setError(
-          "Could not load inventory data from backend. Database API may not be configured yet."
+          "Could not load inventory data from backend. Inventory service or Database API may not be configured."
         );
         setSync({ status: "error", lastSeconds: 0 });
       } finally {
@@ -97,13 +60,32 @@ function App() {
     loadItems();
   }, []);
 
+  // 🔍 Filter items by search term (name or SKU)
+  const filteredItems = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return items;
+
+    return items.filter((item) => {
+      const name = (item.name || "").toLowerCase();
+      const sku = (item.sku || "").toLowerCase();
+      return name.includes(q) || sku.includes(q);
+    });
+  }, [items, searchTerm]);
+
+  // Adjust modal save handler (purely local UI state)
   function handleAdjustSave({ newQty, reason, notes }) {
+    if (!adjustItem) return;
+
+    // Update local quantity
     setItems((prev) =>
       prev.map((i) =>
-        i.id === adjustItem.id ? { ...i, qty: newQty, updatedSecondsAgo: 0 } : i
+        i.id === adjustItem.id
+          ? { ...i, qty: newQty, updatedSecondsAgo: 0 }
+          : i
       )
     );
 
+    // Add a log entry (local only)
     const now = new Date();
     const time = now.toTimeString().slice(0, 8);
 
@@ -115,7 +97,7 @@ function App() {
       from: adjustItem.qty,
       to: newQty,
       source: "Manual",
-      user: "Mo",
+      user: "Inventory UI",
       status: "success",
       notes,
       reason,
@@ -130,49 +112,29 @@ function App() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="logo">
-          <span>🟣</span>
           <span className="text">Project-V Inventory</span>
-          <span className="badge">demo</span>
         </div>
 
         <div>
-          <div className="nav-section-label">Main</div>
           <div className="nav-list">
             <div
               className={"nav-item " + (active === "Home" ? "active" : "")}
               onClick={() => setActive("Home")}
             >
-              <span className="icon">🏠</span>
               <span className="label">Home</span>
             </div>
             <div
-              className={"nav-item " + (active === "Catalogue" ? "active" : "")}
+              className={
+                "nav-item " + (active === "Catalogue" ? "active" : "")
+              }
               onClick={() => setActive("Catalogue")}
             >
-              <span className="icon">📦</span>
               <span className="label">Catalogue</span>
-            </div>
-            <div
-              className={"nav-item " + (active === "Logs" ? "active" : "")}
-              onClick={() => setActive("Logs")}
-            >
-              <span className="icon">📜</span>
-              <span className="label">Logs</span>
-            </div>
-            <div
-              className={"nav-item " + (active === "Settings" ? "active" : "")}
-              onClick={() => setActive("Settings")}
-            >
-              <span className="icon">⚙️</span>
-              <span className="label">Settings</span>
             </div>
           </div>
         </div>
 
-        <div className="sidebar-footer">
-          v0.2 • Data from backend API (when configured) • All manual changes
-          logged
-        </div>
+        <div className="sidebar-footer">©️ Inventory Management</div>
       </aside>
 
       {/* Main */}
@@ -181,18 +143,13 @@ function App() {
         <div className="topbar">
           <input
             className="search-input"
-            placeholder="Quick search (coming soon )…"
+            placeholder="Search inventory"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <SyncChip status={sync.status} lastSeconds={sync.lastSeconds} />
-          <div className="chip" title="Environment">
-            env: TEST
-          </div>
-          <div className="avatar" title="You">
-            Mo
-          </div>
         </div>
 
-        {/* Content */}
+        {/* Content states */}
         {loading && (
           <div style={{ marginTop: "16px" }}>
             <div className="page-title">Loading inventory…</div>
@@ -214,13 +171,11 @@ function App() {
         {!loading && !error && (
           <>
             {active === "Home" && (
-              <HomePage items={items} logs={logs} sync={sync} />
+              <HomePage items={filteredItems} logs={logs} sync={sync} />
             )}
             {active === "Catalogue" && (
-              <CataloguePage items={items} onOpenAdjust={setAdjustItem} />
+              <CataloguePage items={filteredItems} onOpenAdjust={setAdjustItem} />
             )}
-            {active === "Logs" && <LogsPage logs={logs} />}
-            {active === "Settings" && <SettingsPage />}
 
             {adjustItem && (
               <AdjustModal
