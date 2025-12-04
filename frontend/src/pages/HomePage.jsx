@@ -20,8 +20,8 @@ export default function HomePage({ items = [], lastUpdated }) {
   return (
     <div className="page page-home">
       <header className="page-header">
-        <h1>Overview</h1>
-        <p>Live snapshot of stock across all items.</p>
+        <h1>Inventory Dashboard</h1>
+        <p>Current stock, categories, and performance metrics.</p>
       </header>
 
       <section className="grid grid-3 summary-grid">
@@ -49,8 +49,8 @@ export default function HomePage({ items = [], lastUpdated }) {
       <section className="grid grid-2">
         <div className="card section">
           <header className="section-header">
-            <h2>Low stock items</h2>
-            <p>Items at or below their configured threshold.</p>
+            <h2>Stock quantity</h2>
+            <p>Items which are going below threshold.</p>
           </header>
 
           {lowStockItems.length === 0 ? (
