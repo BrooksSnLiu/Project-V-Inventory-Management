@@ -1,116 +1,73 @@
-## Project-V Inventory Management Service
+# Project-V Inventory Management Service
 
 ## Overview
-The Inventory Management Service provides read-only inventory data to other modules in the Project-V enterprise system.
-All inventory information is fetched directly from the Database Team’s API, which acts as the single source of truth.
+The **Inventory Management Service** provides **read-only** inventory data.  
+All information is retrieved directly from the configured Database API, which acts as the source of truth.
 
-This service:                
-
+The service:
 - Does not store any local data
-- Does not modify or create inventory records
-- Exposes stable, consistent APIs for Menu, POS, Transactions, and Facilities teams
+- Does not modify inventory
+- Exposes clean and consistent endpoints for retrieving item information
 
-## Quick Start
+---
 
-### 1. Install Dependencies
-npm install
+## Environment Setup
 
-### 2. Configure Environment
-Create a .env file in the project root:
+Create a `.env` file in the backend directory with the following variables:
 
-DB_API_BASE=<database-service-url>
+```env
+DB_API_BASE=<your-database-api-url>
+DB_API_USERNAME=<your-database-username>
+DB_API_PASSWORD=<your-database-password>
+INVENTORY_COLLECTION=<inventory-collection-name>
+PORT=10000
 
-If not set, all read operations will fail with:
-DB API base URL not configured yet
+### Installation
+## Install dependencies
+Bashnpm install
+## Start the server (development)
+Bashnpm run dev
+The service will be available at:
+http://localhost:10000
 
-### 3. Run the Service
-npm run dev
+### API Endpoints
+All routes are prefixed with /api/v1
 
-### 4. Run Tests
-npm test
+## Health Check
+GET /api/v1/health
 
-## Project Structure
+## Inventory Data
+GET /api/v1/items                → Returns all items
+GET /api/v1/items/:id            → Returns a single item by ID
+GET /api/v1/stock/:id/level      → Returns current stock level for an item
+
+Each endpoint returns data directly from the database after being mapped into a consistent inventory format.
+
+### Project Structure
+
 src/
-  app.js                  Express application and middleware
-  server.js               HTTP server entry point
-  inventory.service.js    Business logic (DB-driven; no local state)
+├── app.js                      # Express app and middleware
+├── server.js                   # Service entry point
+├── inventory.service.js        # Logic for fetching and mapping inventory data
+├── controllers/
+│   └── inventory.controller.js
+├── routes/
+│   └── inventory.routes.js
+└── test/
+    ├── unit/
+    └── integration/
 
-  controllers/
-    inventory.controller.js     Route handlers
 
-  routes/
-    inventory.routes.js         API route definitions
+### Testing
 
-test/
-  service.test.js         Unit tests for service behavior
-
-## API Endpoints
-All endpoints are prefixed with /api/v1.
-
-## Health
-GET /health
-Returns basic service status.
-
-## Inventory (Read-Only)
-These endpoints retrieve data directly from the Database API.
-
-GET /items
-Returns all items.
-
-GET /items/:id
-Returns a specific item.
-
-GET /stock/:id/level
-Returns the stock level of the given item.
-
-## Not Supported
-The Inventory module does not create, edit, or delete inventory items.
-These operations belong to the Database Team or other workflow modules.
-
-The following return 501 Not Implemented:
-
-POST /items
-DELETE /items/:id
-
-## Stock Adjustment (Future Integration)
-POST /stock/adjust
-
-This endpoint exists for API-contract alignment but currently returns a
-“not implemented” response until Transactions Team integration is complete.
-
-## Architecture Summary
-Database Service (source of truth)
-           ↓
-Inventory Management Service
-           ↓
-Menu / POS / Transactions / Facilities Teams
-
-The Inventory Management Service:
-
-- Stores no local data
-- Fetches all records from the Database API
-- Maps external DB responses into consistent internal formats
-- Provides stable consumption interfaces for other teams
-
-## Testing
-The test suite verifies that:
-
-- Read operations fail clearly when DB_API_BASE is missing
-- adjustStock is intentionally not implemented
-- No in-memory Maps or local storage exist
-- Service layer correctly interacts with the Database Team API
-- Mapping layer produces consistent output
-- Errors are handled properly under the new DB-driven design
-- Unit tests align with Sprint 3 architecture
-
-Run all tests using:
+## Run all tests:
 npm test
 
-## Sprint 3 Summary
-- Converted entire module to a DB-driven architecture
-- Removed all legacy in-memory Maps
-- Added response-mapping layer for Database Team outputs
-- Updated controllers, routes, and service logic
-- Improved error handling and failure messages
-- Rewrote unit tests to match the new architecture
-- Documented integration expectations for consuming modules
+The test suite validates:
+
+  Proper behavior when environment variables are missing
+  Correct mapping of inventory documents
+  Endpoint responses and HTTP behavior
+  Error handling for invalid conditions
+
+Both unit tests and integration tests are included
