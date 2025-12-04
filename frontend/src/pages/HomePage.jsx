@@ -2,16 +2,6 @@
 import React from "react";
 import { summarizeItems } from "../helpers.js";
 
-function formatTime(ts) {
-  if (!ts) return "–";
-  try {
-    const d = new Date(ts);
-    return d.toLocaleTimeString();
-  } catch {
-    return "–";
-  }
-}
-
 function getQuantity(raw) {
   if (typeof raw.quantity === "number") return raw.quantity;
   if (typeof raw.quantityOnHand === "number") return raw.quantityOnHand;
@@ -21,11 +11,10 @@ function getQuantity(raw) {
 export default function HomePage({ items = [], lastUpdated }) {
   const { total, lowStock, outOfStock, lowStockItems } = summarizeItems(items);
 
-  // --- Top items by quantity (for the mini “graph”) ---
   const sortedByQty = [...items].sort(
     (a, b) => getQuantity(b) - getQuantity(a)
   );
-  const topItems = sortedByQty.slice(0, 3); // top 3
+  const topItems = sortedByQty.slice(0, 3);
   const maxQty = topItems.length ? getQuantity(topItems[0]) || 1 : 1;
 
   return (
@@ -35,7 +24,6 @@ export default function HomePage({ items = [], lastUpdated }) {
         <p>Live snapshot of stock across all items.</p>
       </header>
 
-      {/* Top summary cards */}
       <section className="grid grid-3 summary-grid">
         <div className="card metric-card">
           <h2>Total SKUs</h2>
@@ -47,7 +35,7 @@ export default function HomePage({ items = [], lastUpdated }) {
           <h2>Low stock items</h2>
           <p className="metric-value">{lowStock}</p>
           <p className="metric-caption">
-            Qty above 0 but at or below reorder point
+            Items at or below their configured threshold
           </p>
         </div>
 
@@ -58,9 +46,7 @@ export default function HomePage({ items = [], lastUpdated }) {
         </div>
       </section>
 
-      {/* Two-column layout: Low-stock table + Top items “graph” */}
       <section className="grid grid-2">
-        {/* Low-stock table */}
         <div className="card section">
           <header className="section-header">
             <h2>Low stock items</h2>
@@ -93,7 +79,6 @@ export default function HomePage({ items = [], lastUpdated }) {
           )}
         </div>
 
-        {/* Top items mini-dashboard */}
         <div className="card section">
           <header className="section-header">
             <h2>Top items (by quantity)</h2>
@@ -128,7 +113,6 @@ export default function HomePage({ items = [], lastUpdated }) {
               })}
             </div>
           )}
-
         </div>
       </section>
     </div>

@@ -1,10 +1,8 @@
-
 // Each item at minimum has: { id, name, sku, quantity, reorderPoint }
 
 export function summarizeItems(items = []) {
   const total = items.length;
 
-  let lowStock = 0;
   let outOfStock = 0;
   const lowStockItems = [];
 
@@ -21,11 +19,10 @@ export function summarizeItems(items = []) {
 
     if (quantity === 0) {
       outOfStock += 1;
-    } else if (quantity > 0 && quantity <= reorderPoint) {
-      lowStock += 1;
     }
 
-    if (quantity === 0 || quantity <= reorderPoint) {
+    
+    if (quantity <= reorderPoint) {
       lowStockItems.push({
         id: raw.id,
         name: raw.name,
@@ -35,6 +32,9 @@ export function summarizeItems(items = []) {
       });
     }
   }
+
+
+  const lowStock = lowStockItems.length;
 
   return {
     total,
